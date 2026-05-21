@@ -9,3 +9,5 @@ You have to repeat the color sequence exactly. If you did everything correctly, 
 If not, the tower collapses and the result is displayed on the screen.
 If you do it correctly twice in a row, a new cube is added to the hint.
 
+There is also a leader board and you save your beast result which other players can see
+
