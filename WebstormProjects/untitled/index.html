@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Color Tower</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<!-- ACCOUNT CORNER -->
+
+<div id="accountCorner">
+
+    <div id="avatarIcon">
+        👤
+
+        <div id="notificationDot" class="hidden"></div>
+    </div>
+
+    <div id="accountName">
+        ACCOUNT
+    </div>
+
+</div>
+
+<!-- LOGIN SCREEN -->
+
+<div id="loginOverlay" class="hidden">
+
+    <div id="loginBox">
+
+        <h2>LOGIN</h2>
+
+        <input
+                id="loginEmail"
+                type="email"
+                placeholder="EMAIL"
+        >
+
+        <input
+                id="loginPassword"
+                type="password"
+                placeholder="PASSWORD"
+        >
+
+        <button id="loginButton">
+            LOGIN
+        </button>
+
+        <button id="closeLoginButton">
+            CLOSE
+        </button>
+
+    </div>
+
+</div>
+
+<!-- PROFILE SCREEN -->
+
+<div id="profileOverlay" class="hidden">
+
+    <div id="profileBox">
+
+        <div id="profileTop">
+
+            <div id="profileAvatar">
+                👤
+            </div>
+
+            <div id="profileNicknameContainer">
+
+        <span id="profileNickname">
+          PLAYER
+        </span>
+
+                <button id="editNicknameButton">
+                    ✎
+                </button>
+
+            </div>
+
+        </div>
+
+        <div id="friendNotificationArea">
+
+            <h3>FRIEND REQUESTS</h3>
+
+            <div id="friendRequests"></div>
+
+        </div>
+
+        <div id="friendsArea">
+
+            <h3>FRIENDS</h3>
+
+            <div id="friendsList"></div>
+
+        </div>
+
+        <div id="addFriendArea">
+
+            <input
+                    id="friendNicknameInput"
+                    type="text"
+                    placeholder="FRIEND NICKNAME"
+            >
+
+            <button id="addFriendButton">
+                ADD FRIEND
+            </button>
+
+        </div>
+
+        <button id="logoutButton">
+            LOGOUT
+        </button>
+
+        <button id="closeProfileButton">
+            CLOSE
+        </button>
+
+    </div>
+
+</div>
+
+<div id="registerOverlay" class="hidden">
+
+    <div id="registerBox">
+
+        <h2>REGISTER</h2>
+
+        <input
+                id="emailInput"
+                type="email"
+                placeholder="EMAIL"
+        >
+
+        <input
+                id="nicknameInput"
+                type="text"
+                placeholder="NICKNAME"
+                maxlength="15"
+        >
+
+        <input
+                id="passwordInput"
+                type="password"
+                placeholder="PASSWORD"
+        >
+
+        <button id="createAccountButton">
+            CREATE ACCOUNT
+        </button>
+
+        <button id="closeRegisterButton">
+            CLOSE
+        </button>
+
+    </div>
+
+</div>
+
+<body>
+
+<div id="startScreen" class="screen">
+
+    <h1>COLOR TOWER</h1>
+
+    <div id="mainMenu">
+        <button id="singlePlayButton" class="menuButton">SINGLE PLAY</button>
+        <button id="onlineButton" class="menuButton">ONLINE PLAY</button>
+    </div>
+
+    <div id="difficultyMenu" class="hidden">
+        <button id="easyButton" class="menuButton">EASY MODE</button>
+        <button id="hardButton" class="menuButton">HARD MODE</button>
+        <button id="backButton" class="smallButton">BACK</button>
+    </div>
+
+    <button id="registerButton">REGISTER</button>
+
+</div>
+
+<div id="gameScreen" class="hidden">
+
+    <div id="scoreBar">
+        <span id="scoreText">Score: 0</span>
+        <span id="bestText">Best: 0</span>
+    </div>
+
+    <h2 id="message">Watch the hint...</h2>
+
+    <div id="towerArea">
+
+        <div id="landscape">
+            <div id="sky"></div>
+            <div id="grass"></div>
+        </div>
+
+        <div id="tower"></div>
+
+    </div>
+
+    <div id="cubeSelection">
+        <button class="cube red" data-color="red"></button>
+        <button class="cube orange" data-color="orange"></button>
+        <button class="cube yellow" data-color="yellow"></button>
+        <button class="cube green" data-color="green"></button>
+        <button class="cube blue" data-color="blue"></button>
+        <button class="cube purple" data-color="purple"></button>
+        <button class="cube pink" data-color="pink"></button>
+    </div>
+
+    <div id="leaderboard" class="hidden">
+        <h2>GAME OVER</h2>
+        <p id="currentScoreText"></p>
+        <p id="bestScoreText"></p>
+
+        <button id="restartButton">RESTART</button>
+        <button id="mainMenuButton">MAIN MENU</button>
+        <button id="shareButton">SHARE</button>
+    </div>
+
+</div>
+
+<div id="hintOverlay" class="hidden">
+    <h2>REMEMBER</h2>
+    <div id="hintCubes"></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
