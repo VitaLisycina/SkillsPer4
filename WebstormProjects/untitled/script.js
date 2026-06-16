@@ -31,6 +31,35 @@ const notificationDot = document.getElementById("notificationDot");
 
 let currentUser = null;
 
+const resetOverlay =
+    document.getElementById("resetOverlay");
+
+const resetEmailInput =
+    document.getElementById("resetEmailInput");
+
+const newPasswordInput =
+    document.getElementById("newPasswordInput");
+
+const resetPasswordButton =
+    document.getElementById("resetPasswordButton");
+
+const closeResetButton =
+    document.getElementById("closeResetButton");
+
+
+closeResetButton.addEventListener("click", () => {
+
+    resetOverlay.classList.add("hidden");
+});
+
+
+const openLoginFromRegisterButton = document.getElementById("openLoginFromRegisterButton");
+
+openLoginFromRegisterButton.addEventListener("click", () => {
+    registerOverlay.classList.add("hidden");
+    loginOverlay.classList.remove("hidden");
+});
+
 /* ACCOUNT CORNER CLICK */
 
 accountCorner.addEventListener("click", () => {
@@ -45,18 +74,17 @@ accountCorner.addEventListener("click", () => {
     }
 });
 
-/* LOGIN */
-
 loginButton.addEventListener("click", () => {
-
-    const email = loginEmail.value.trim();
+    const loginValue = loginEmail.value.trim();
     const password = loginPassword.value.trim();
 
-    const users =
-        JSON.parse(localStorage.getItem("users")) || [];
+    const users = JSON.parse(localStorage.getItem("users")) || [];
 
     const foundUser = users.find(user =>
-        user.email === email &&
+        (
+            user.email.toLowerCase() === loginValue.toLowerCase() ||
+            user.nickname.toLowerCase() === loginValue.toLowerCase()
+        ) &&
         user.password === password
     );
 
@@ -67,9 +95,14 @@ loginButton.addEventListener("click", () => {
 
     currentUser = foundUser;
 
+    localStorage.setItem("currentUserEmail", foundUser.email);
+
     updateAccountUI();
 
     loginOverlay.classList.add("hidden");
+
+    loginEmail.value = "";
+    loginPassword.value = "";
 });
 
 /* LOGOUT */
@@ -99,7 +132,11 @@ function updateAccountUI() {
         accountName.textContent =
             "ACCOUNT";
     }
+
+    updateNotificationDot();
+
 }
+
 
 /* PROFILE */
 
@@ -112,6 +149,9 @@ function openProfile() {
 
     renderFriends();
     renderFriendRequests();
+
+    renderGameInvites();
+    updateNotificationDot();
 }
 
 /* CLOSE */
@@ -351,73 +391,6 @@ closeRegisterButton.addEventListener("click", () => {
     registerOverlay.classList.add("hidden");
 });
 
-createAccountButton.addEventListener("click", () => {
-    const email = emailInput.value.trim();
-    const nickname = nicknameInput.value.trim();
-    const password = passwordInput.value.trim();
-
-    let users = JSON.parse(localStorage.getItem("users")) || [];
-
-    if (!email.includes("@")) {
-        alert("Invalid email.");
-        return;
-    }
-
-    if (nickname.length < 1 || nickname.length > 15) {
-        alert("Nickname must be 1-15 symbols.");
-        return;
-    }
-
-    if (password.length < 4) {
-        alert("Password too short.");
-        return;
-    }
-
-    const nicknameExists = users.some(user =>
-        user.nickname.toLowerCase() === nickname.toLowerCase()
-    );
-
-    if (nicknameExists) {
-        alert("Nickname already taken.");
-        return;
-    }
-
-    const emailExists = users.some(user =>
-        user.email.toLowerCase() === email.toLowerCase()
-    );
-
-    if (emailExists) {
-        alert("Email already registered.");
-        return;
-    }
-
-    const newUser = {
-        email: email,
-        nickname: nickname,
-        password: password,
-        bestScore: 0,
-        friends: [],
-        friendRequests: []
-    };
-
-    users.push(newUser);
-
-    localStorage.setItem("users", JSON.stringify(users));
-
-    // site remembers logged-in user
-    localStorage.setItem("currentUserEmail", email);
-
-    currentUser = newUser;
-    updateAccountUI();
-
-    alert("Account created.");
-
-    registerOverlay.classList.add("hidden");
-
-    emailInput.value = "";
-    nicknameInput.value = "";
-    passwordInput.value = "";
-});
 
 function loadSavedUser() {
     const savedEmail = localStorage.getItem("currentUserEmail");
@@ -429,6 +402,7 @@ function loadSavedUser() {
 
     if (foundUser) {
         currentUser = foundUser;
+        localStorage.setItem("currentUserEmail", foundUser.email);
         updateAccountUI();
     }
 }
@@ -548,13 +522,32 @@ singlePlayButton.addEventListener("click", () => {
 });
 
 easyButton.addEventListener("click", () => {
+
+    if (!currentUser) {
+
+        registerOverlay.classList.remove("hidden");
+        return;
+    }
+
     gameMode = "easy";
-    document.body.classList.remove("hardMode");
+
+    updateCubeMenuColors();
+
     startGame();
 });
 
 hardButton.addEventListener("click", () => {
+
+    if (!currentUser) {
+
+        registerOverlay.classList.remove("hidden");
+        return;
+    }
+
     gameMode = "hard";
+
+    updateCubeMenuColors();
+
     startGame();
 });
 
@@ -622,6 +615,8 @@ function resetGame() {
     updateScoreText();
 
     message.textContent = "Watch the hint...";
+
+    updateCubeMenuColors();
 }
 
 function startRound() {
@@ -849,4 +844,598 @@ function playCollapseSound() {
     playTone(110, 0.5, "sawtooth");
 }
 
+/* ONLINE */
+
+let onlineSelectedMode = "easy";
+let currentRoomId = null;
+
+const onlineModeOverlay = document.getElementById("onlineModeOverlay");
+const onlineEasyButton = document.getElementById("onlineEasyButton");
+const onlineHardButton = document.getElementById("onlineHardButton");
+const closeOnlineModeButton = document.getElementById("closeOnlineModeButton");
+
+const inviteOverlay = document.getElementById("inviteOverlay");
+const onlineFriendsList = document.getElementById("onlineFriendsList");
+const onlineFriendSearchInput = document.getElementById("onlineFriendSearchInput");
+const searchOnlineFriendButton = document.getElementById("searchOnlineFriendButton");
+const onlineSearchResult = document.getElementById("onlineSearchResult");
+const inviteLinkText = document.getElementById("inviteLinkText");
+const copyInviteLinkButton = document.getElementById("copyInviteLinkButton");
+const closeInviteButton = document.getElementById("closeInviteButton");
+
+const onlineRoomScreen = document.getElementById("onlineRoomScreen");
+const onlineRoomInfo = document.getElementById("onlineRoomInfo");
+const playerOneReadyBox = document.getElementById("playerOneReadyBox");
+const playerTwoReadyBox = document.getElementById("playerTwoReadyBox");
+const readyButton = document.getElementById("readyButton");
+const leaveRoomButton = document.getElementById("leaveRoomButton");
+
+/* ONLINE PLAY BUTTON */
+
+onlineButton.addEventListener("click", () => {
+    if (!currentUser) {
+        registerOverlay.classList.remove("hidden");
+        return;
+    }
+
+    onlineModeOverlay.classList.remove("hidden");
+});
+
+easyButton.addEventListener("click", () => {
+    gameMode = "easy";
+    updateCubeMenuColors();
+    startGame();
+});
+
+hardButton.addEventListener("click", () => {
+    gameMode = "hard";
+    updateCubeMenuColors();
+    startGame();
+});
+
+onlineButton.addEventListener("click", () => {
+    if (!currentUser) {
+        registerOverlay.classList.remove("hidden");
+        return;
+    }
+
+    onlineModeOverlay.classList.remove("hidden");
+});
+
+closeOnlineModeButton.addEventListener("click", () => {
+    onlineModeOverlay.classList.add("hidden");
+});
+
+/* INVITE WINDOW */
+
+function openInviteWindow() {
+    onlineModeOverlay.classList.add("hidden");
+    inviteOverlay.classList.remove("hidden");
+
+    const room = createOnlineRoom();
+    currentRoomId = room.id;
+
+    renderOnlineFriends();
+    renderInviteLink();
+}
+
+function createOnlineRoom() {
+    const room = {
+        id: "room_" + Date.now(),
+        mode: onlineSelectedMode,
+        host: currentUser.nickname,
+        guest: null,
+        hostReady: false,
+        guestReady: false
+    };
+
+    let rooms = JSON.parse(localStorage.getItem("onlineRooms")) || [];
+    rooms.push(room);
+
+    localStorage.setItem("onlineRooms", JSON.stringify(rooms));
+
+    return room;
+}
+
+function renderInviteLink() {
+    const link = window.location.origin + window.location.pathname + "?room=" + currentRoomId;
+    inviteLinkText.textContent = link;
+}
+
+copyInviteLinkButton.addEventListener("click", () => {
+    navigator.clipboard.writeText(inviteLinkText.textContent);
+    alert("Invite link copied.");
+});
+
+closeInviteButton.addEventListener("click", () => {
+    inviteOverlay.classList.add("hidden");
+});
+
+/* FRIEND INVITE */
+
+function renderOnlineFriends() {
+    onlineFriendsList.innerHTML = "";
+
+    if (!currentUser.friends || currentUser.friends.length === 0) {
+        onlineFriendsList.textContent = "No friends yet.";
+        return;
+    }
+
+    currentUser.friends.forEach(friendName => {
+        const button = document.createElement("button");
+        button.textContent = "INVITE " + friendName;
+
+        button.addEventListener("click", () => {
+            sendGameInvite(friendName);
+        });
+
+        onlineFriendsList.appendChild(button);
+    });
+}
+
+function sendGameInvite(friendName) {
+    let users = JSON.parse(localStorage.getItem("users")) || [];
+
+    const friend = users.find(user =>
+        user.nickname.toLowerCase() === friendName.toLowerCase()
+    );
+
+    if (!friend) {
+        alert("Friend not found.");
+        return;
+    }
+
+    if (!friend.gameInvites) {
+        friend.gameInvites = [];
+    }
+
+    friend.gameInvites.push({
+        from: currentUser.nickname,
+        roomId: currentRoomId,
+        mode: onlineSelectedMode
+    });
+
+    users = users.map(user => {
+        if (user.email === friend.email) return friend;
+        return user;
+    });
+
+    localStorage.setItem("users", JSON.stringify(users));
+
+    alert("Invite sent.");
+}
+
+/* SEARCH FRIEND BY NICKNAME */
+
+searchOnlineFriendButton.addEventListener("click", () => {
+    const nickname = onlineFriendSearchInput.value.trim();
+
+    const users = JSON.parse(localStorage.getItem("users")) || [];
+
+    const found = users.find(user =>
+        user.nickname.toLowerCase() === nickname.toLowerCase()
+    );
+
+    onlineSearchResult.innerHTML = "";
+
+    if (!found) {
+        onlineSearchResult.textContent = "User not found.";
+        return;
+    }
+
+    const button = document.createElement("button");
+    button.textContent = "INVITE " + found.nickname;
+
+    button.addEventListener("click", () => {
+        sendGameInvite(found.nickname);
+    });
+
+    onlineSearchResult.appendChild(button);
+});
+
+/* PROFILE GAME INVITES */
+
+function renderGameInvites() {
+    let gameInviteBox = document.getElementById("gameInvites");
+
+    if (!gameInviteBox) {
+        gameInviteBox = document.createElement("div");
+        gameInviteBox.id = "gameInvites";
+
+        const title = document.createElement("h3");
+        title.textContent = "GAME INVITES";
+
+        profileBox.insertBefore(title, friendsArea);
+        profileBox.insertBefore(gameInviteBox, friendsArea);
+    }
+
+    gameInviteBox.innerHTML = "";
+
+    if (!currentUser.gameInvites) {
+        currentUser.gameInvites = [];
+    }
+
+    if (currentUser.gameInvites.length === 0) {
+        gameInviteBox.textContent = "No game invites.";
+        return;
+    }
+
+    currentUser.gameInvites.forEach(invite => {
+        const button = document.createElement("button");
+        button.textContent = invite.from + " / " + invite.mode;
+
+        button.addEventListener("click", () => {
+            acceptGameInvite(invite.roomId);
+        });
+
+        gameInviteBox.appendChild(button);
+    });
+}
+
+function acceptGameInvite(roomId) {
+    let rooms = JSON.parse(localStorage.getItem("onlineRooms")) || [];
+
+    const room = rooms.find(r => r.id === roomId);
+
+    if (!room) {
+        alert("Room not found.");
+        return;
+    }
+
+    room.guest = currentUser.nickname;
+
+    rooms = rooms.map(r => {
+        if (r.id === room.id) return room;
+        return r;
+    });
+
+    localStorage.setItem("onlineRooms", JSON.stringify(rooms));
+
+    currentUser.gameInvites = currentUser.gameInvites.filter(invite =>
+        invite.roomId !== roomId
+    );
+
+    saveCurrentUser();
+
+    openOnlineRoom(roomId);
+}
+//////colours
+function updateCubeMenuColors() {
+
+    cubes.forEach(cube => {
+
+        cube.classList.remove(
+            "red",
+            "orange",
+            "yellow",
+            "green",
+            "blue",
+            "purple",
+            "pink",
+            "hard-red",
+            "hard-orange",
+            "hard-yellow",
+            "hard-green",
+            "hard-blue",
+            "hard-purple",
+            "hard-pink"
+        );
+
+        const color =
+            cube.dataset.color;
+
+        if (gameMode === "easy") {
+
+            cube.classList.add(color);
+
+        } else {
+
+            cube.classList.add(
+                hardColorMap[color]
+            );
+        }
+    });
+}
+
+
+/* ONLINE ROOM */
+
+function openOnlineRoom(roomId) {
+    currentRoomId = roomId;
+
+    startScreen.classList.add("hidden");
+    gameScreen.classList.add("hidden");
+    profileOverlay.classList.add("hidden");
+    inviteOverlay.classList.add("hidden");
+    onlineRoomScreen.classList.remove("hidden");
+
+    renderOnlineRoom();
+}
+
+function getCurrentRoom() {
+    const rooms = JSON.parse(localStorage.getItem("onlineRooms")) || [];
+    return rooms.find(room => room.id === currentRoomId);
+}
+
+function saveRoom(updatedRoom) {
+    let rooms = JSON.parse(localStorage.getItem("onlineRooms")) || [];
+
+    rooms = rooms.map(room => {
+        if (room.id === updatedRoom.id) return updatedRoom;
+        return room;
+    });
+
+    localStorage.setItem("onlineRooms", JSON.stringify(rooms));
+}
+
+function renderOnlineRoom() {
+    const room = getCurrentRoom();
+
+    if (!room) return;
+
+    onlineRoomInfo.textContent =
+        "MODE: " + room.mode +
+        " | HOST: " + room.host +
+        " | GUEST: " + (room.guest || "WAITING");
+
+    playerOneReadyBox.classList.toggle("ready", room.hostReady);
+    playerTwoReadyBox.classList.toggle("ready", room.guestReady);
+
+    if (room.hostReady && room.guestReady) {
+        onlineRoomInfo.textContent = "BOTH PLAYERS READY.";
+        setTimeout(startOnlineGameRoom, 1000);
+    }
+}
+
+readyButton.addEventListener("click", () => {
+    const room = getCurrentRoom();
+
+    if (!room) return;
+
+    if (currentUser.nickname === room.host) {
+        room.hostReady = true;
+    }
+
+    if (currentUser.nickname === room.guest) {
+        room.guestReady = true;
+    }
+
+    saveRoom(room);
+    renderOnlineRoom();
+});
+
+leaveRoomButton.addEventListener("click", () => {
+    onlineRoomScreen.classList.add("hidden");
+    startScreen.classList.remove("hidden");
+});
+
+/* LINK JOIN */
+
+function checkInviteLink() {
+    const params = new URLSearchParams(window.location.search);
+    const roomId = params.get("room");
+
+    if (!roomId) return;
+
+    if (!currentUser) {
+        registerOverlay.classList.remove("hidden");
+        localStorage.setItem("pendingRoomId", roomId);
+        return;
+    }
+
+    joinRoomFromLink(roomId);
+}
+
+function joinRoomFromLink(roomId) {
+    let rooms = JSON.parse(localStorage.getItem("onlineRooms")) || [];
+
+    const room = rooms.find(r => r.id === roomId);
+
+    if (!room) {
+        alert("Room not found.");
+        return;
+    }
+
+    if (!room.guest && room.host !== currentUser.nickname) {
+        room.guest = currentUser.nickname;
+    }
+
+    rooms = rooms.map(r => {
+        if (r.id === room.id) return room;
+        return r;
+    });
+
+    localStorage.setItem("onlineRooms", JSON.stringify(rooms));
+
+    openOnlineRoom(roomId);
+}
+
+
+////
+let onlineSequence = [];
+let onlinePlayerInput = [];
+let onlineRoundBlocks = [];
+let opponentCurrentRoundHidden = [];
+
+const onlineGameScreen = document.getElementById("onlineGameScreen");
+const onlineGameModeText = document.getElementById("onlineGameModeText");
+const onlineGameStatusText = document.getElementById("onlineGameStatusText");
+const yourOnlineTower = document.getElementById("yourOnlineTower");
+const opponentOnlineTower = document.getElementById("opponentOnlineTower");
+const onlineCubes = document.querySelectorAll(".onlineCube");
+
+function startOnlineGameRoom() {
+    onlineRoomScreen.classList.add("hidden");
+    onlineGameScreen.classList.remove("hidden");
+
+    onlineGameModeText.textContent = "MODE: " + onlineSelectedMode;
+    onlineGameStatusText.textContent = "YOUR TURN";
+
+    yourOnlineTower.innerHTML = "";
+    opponentOnlineTower.innerHTML = "";
+
+    startOnlineRound();
+}
+
+function startOnlineRound() {
+    onlinePlayerInput = [];
+    onlineRoundBlocks = [];
+    opponentCurrentRoundHidden = [];
+
+    onlineSequence = createRandomSequence(sequenceLength);
+
+    showOnlineHint();
+}
+
+function showOnlineHint() {
+    hintCubes.innerHTML = "";
+
+    onlineSequence.forEach(color => {
+        const cube = document.createElement("div");
+        cube.classList.add("hintCube");
+        cube.classList.add(getOnlineVisualClass(color));
+        hintCubes.appendChild(cube);
+    });
+
+    hintOverlay.classList.remove("hidden");
+
+    setTimeout(() => {
+        hintOverlay.classList.add("hidden");
+        onlineGameStatusText.textContent = "BUILD";
+    }, 2200);
+}
+
+onlineCubes.forEach(cube => {
+    cube.addEventListener("click", () => {
+        if (onlineGameScreen.classList.contains("hidden")) return;
+
+        const color = cube.dataset.color;
+
+        onlinePlayerInput.push(color);
+
+        addOnlineCube(yourOnlineTower, color, false);
+
+        // opponent sees this block as black during current round
+        addOnlineCube(opponentOnlineTower, color, true);
+
+        checkOnlineInput();
+    });
+});
+
+function addOnlineCube(towerElement, color, hiddenForOpponent) {
+    const block = document.createElement("div");
+
+    block.classList.add("onlineTowerCube");
+
+    if (hiddenForOpponent) {
+        block.classList.add("hiddenOpponentBlock");
+        block.dataset.realColor = color;
+        opponentCurrentRoundHidden.push(block);
+    } else {
+        block.classList.add(getOnlineVisualClass(color));
+    }
+
+    towerElement.appendChild(block);
+}
+
+function checkOnlineInput() {
+    const index = onlinePlayerInput.length - 1;
+
+    if (onlinePlayerInput[index] !== onlineSequence[index]) {
+        onlineGameStatusText.textContent = "YOU LOST";
+        revealOpponentRoundBlocks();
+        return;
+    }
+
+    if (onlinePlayerInput.length === onlineSequence.length) {
+        onlineGameStatusText.textContent = "ROUND DONE";
+        revealOpponentRoundBlocks();
+
+        setTimeout(startOnlineRound, 1500);
+    }
+}
+
+function revealOpponentRoundBlocks() {
+    opponentCurrentRoundHidden.forEach(block => {
+        const realColor = block.dataset.realColor;
+
+        block.classList.remove("hiddenOpponentBlock");
+        block.classList.add(getOnlineVisualClass(realColor));
+    });
+
+    opponentCurrentRoundHidden = [];
+}
+
+function getOnlineVisualClass(color) {
+    if (onlineSelectedMode === "hard") {
+        return hardColorMap[color];
+    }
+
+    return color;
+}
+
+/* UPDATE NOTIFICATION DOT */
+
+function updateNotificationDot() {
+    if (!currentUser) {
+        notificationDot.classList.add("hidden");
+        return;
+    }
+
+    const hasFriendRequests =
+        currentUser.friendRequests &&
+        currentUser.friendRequests.length > 0;
+
+    const hasGameInvites =
+        currentUser.gameInvites &&
+        currentUser.gameInvites.length > 0;
+
+    if (hasFriendRequests || hasGameInvites) {
+        notificationDot.classList.remove("hidden");
+    } else {
+        notificationDot.classList.add("hidden");
+    }
+}
+
+function loadSavedUser() {
+
+    const savedEmail =
+        localStorage.getItem("currentUserEmail");
+
+    if (!savedEmail) return;
+
+    const users =
+        JSON.parse(localStorage.getItem("users")) || [];
+
+    const foundUser =
+        users.find(user =>
+            user.email === savedEmail
+        );
+
+    if (!foundUser) return;
+
+    currentUser = foundUser;
+
+    updateAccountUI();
+}
+
+function loadSavedUser() {
+    const savedEmail = localStorage.getItem("currentUserEmail");
+
+    if (!savedEmail) return;
+
+    const users = JSON.parse(localStorage.getItem("users")) || [];
+
+    const foundUser = users.find(user =>
+        user.email.toLowerCase() === savedEmail.toLowerCase()
+    );
+
+    if (!foundUser) return;
+
+    currentUser = foundUser;
+
+    updateAccountUI();
+}
+
 loadSavedUser();
+checkInviteLink();

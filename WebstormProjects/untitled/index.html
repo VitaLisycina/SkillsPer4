@@ -6,6 +6,40 @@
     <title>Color Tower</title>
     <link rel="stylesheet" href="style.css">
 </head>
+<body>
+
+<div id="onlineGameScreen" class="hidden">
+
+    <div id="onlineGameTop">
+        <span id="onlineGameModeText">MODE</span>
+        <span id="onlineGameStatusText">PLAYING</span>
+    </div>
+
+    <div id="onlineGameBoard">
+
+        <div class="onlineSide">
+            <h2>YOU</h2>
+            <div id="yourOnlineTower" class="onlineTower"></div>
+        </div>
+
+        <div class="onlineSide">
+            <h2>OPPONENT</h2>
+            <div id="opponentOnlineTower" class="onlineTower"></div>
+        </div>
+
+    </div>
+
+    <div id="onlineCubeSelection">
+        <button class="onlineCube red" data-color="red"></button>
+        <button class="onlineCube orange" data-color="orange"></button>
+        <button class="onlineCube yellow" data-color="yellow"></button>
+        <button class="onlineCube green" data-color="green"></button>
+        <button class="onlineCube blue" data-color="blue"></button>
+        <button class="onlineCube purple" data-color="purple"></button>
+        <button class="onlineCube pink" data-color="pink"></button>
+    </div>
+
+</div>
 
 <!-- ACCOUNT CORNER -->
 
@@ -26,33 +60,15 @@
 <!-- LOGIN SCREEN -->
 
 <div id="loginOverlay" class="hidden">
-
     <div id="loginBox">
-
         <h2>LOGIN</h2>
 
-        <input
-                id="loginEmail"
-                type="email"
-                placeholder="EMAIL"
-        >
+        <input id="loginEmail" type="text" placeholder="EMAIL OR NICKNAME">
+        <input id="loginPassword" type="password" placeholder="PASSWORD">
 
-        <input
-                id="loginPassword"
-                type="password"
-                placeholder="PASSWORD"
-        >
-
-        <button id="loginButton">
-            LOGIN
-        </button>
-
-        <button id="closeLoginButton">
-            CLOSE
-        </button>
-
+        <button id="loginButton">LOGIN</button>
+        <button id="closeLoginButton">CLOSE</button>
     </div>
-
 </div>
 
 <!-- PROFILE SCREEN -->
@@ -152,6 +168,10 @@
             CREATE ACCOUNT
         </button>
 
+        <button id="openLoginFromRegisterButton">
+            LOG IN
+        </button>
+
         <button id="closeRegisterButton">
             CLOSE
         </button>
@@ -160,7 +180,37 @@
 
 </div>
 
-<body>
+<div id="resetOverlay" class="hidden">
+
+    <div id="resetBox">
+
+        <h2>RESET PASSWORD</h2>
+
+        <input
+                id="resetEmailInput"
+                type="email"
+                placeholder="EMAIL"
+        >
+
+        <input
+                id="newPasswordInput"
+                type="password"
+                placeholder="NEW PASSWORD"
+        >
+
+        <button id="resetPasswordButton">
+            CHANGE PASSWORD
+        </button>
+
+        <button id="closeResetButton">
+            CLOSE
+        </button>
+
+    </div>
+
+</div>
+
+
 
 <div id="startScreen" class="screen">
 
@@ -226,6 +276,47 @@
 <div id="hintOverlay" class="hidden">
     <h2>REMEMBER</h2>
     <div id="hintCubes"></div>
+</div>
+
+<div id="onlineModeOverlay" class="hidden">
+    <div class="modalBox">
+        <h2>ONLINE MODE</h2>
+        <button id="onlineEasyButton">EASY MODE</button>
+        <button id="onlineHardButton">HARD MODE</button>
+        <button id="closeOnlineModeButton">BACK</button>
+    </div>
+</div>
+
+<div id="inviteOverlay" class="hidden">
+    <div class="modalBox">
+        <h2>INVITE FRIEND</h2>
+
+        <h3>YOUR FRIENDS</h3>
+        <div id="onlineFriendsList"></div>
+
+        <input id="onlineFriendSearchInput" type="text" placeholder="NICKNAME">
+        <button id="searchOnlineFriendButton">SEARCH</button>
+        <div id="onlineSearchResult"></div>
+
+        <p id="inviteLinkText"></p>
+        <button id="copyInviteLinkButton">COPY INVITE LINK</button>
+
+        <button id="closeInviteButton">BACK</button>
+    </div>
+</div>
+
+<div id="onlineRoomScreen" class="hidden">
+    <h2>ONLINE ROOM</h2>
+
+    <div id="onlineRoomInfo"></div>
+
+    <div id="readyPanel">
+        <div class="readyBox" id="playerOneReadyBox">✓</div>
+        <div class="readyBox" id="playerTwoReadyBox">✓</div>
+    </div>
+
+    <button id="readyButton">START / READY</button>
+    <button id="leaveRoomButton">LEAVE ROOM</button>
 </div>
 
 <script src="script.js"></script>
